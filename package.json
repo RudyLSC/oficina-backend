@@ -1,21 +1,13 @@
 {
-  
   "name": "oficina-backend",
   "version": "1.0.0",
+  "description": "Backend do sistema de oficina",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
-  }
-}
-
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
+  },
   "dependencies": {
-    "cors": "^2.8.5",
-    "express": "^5.2.1",
-    "jsonwebtoken": "^9.0.3",
+    "express": "^4.19.2",
     "sqlite3": "^5.1.7"
   }
 }
