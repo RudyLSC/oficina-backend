@@ -18,25 +18,22 @@ app.post('/login', (req, res) => {
 
 // CRIAR CHAMADO
 app.post('/chamados', (req, res) => {
-  const { cliente, veiculo, manutenção } = req.body;
+  const { cliente, veiculo, problema } = req.body;
 
-  db.run(
-    `INSERT INTO chamados (cliente, veiculo, manutenção, status, valor, aprovado)
-     VALUES (?, ?, ?, ?, ?, ?)`,
-    [cliente, veiculo, manutenção, 'ABERTO', 0, 0],
-    function (err) {
-      if (err) return res.status(500).end();
-      res.json({ id: this.lastID });
-    }
-  );
+  const stmt = db.prepare(`
+    INSERT INTO chamados (cliente, veiculo, problema, status, valor, aprovado)
+    VALUES (?, ?, ?, ?, ?, ?)
+  `);
+
+  const result = stmt.run(cliente, veiculo, problema, 'ABERTO', 0, 0);
+
+  res.json({ id: result.lastInsertRowid });
 });
 
 // LISTAR CHAMADOS
 app.get('/chamados', (req, res) => {
-  db.all(`SELECT * FROM chamados`, (err, rows) => {
-    if (err) return res.status(500).end();
-    res.json(rows);
-  });
+  const rows = db.prepare(`SELECT * FROM chamados`).all();
+  res.json(rows);
 });
 
 // ATUALIZAR ORÇAMENTO
@@ -44,61 +41,44 @@ app.put('/chamados/:id/orcamento', (req, res) => {
   const { valor, aprovado } = req.body;
   const id = req.params.id;
 
-  db.run(
-    `UPDATE chamados SET valor = ?, aprovado = ? WHERE id = ?`,
-    [valor, aprovado, id],
-    function (err) {
-      if (err) {
-        console.log(err);
-        return res.status(500).end();
-      }
-      res.json({ sucesso: true });
-    }
-  );
-});
+  db.prepare(
+    `UPDATE chamados SET valor = ?, aprovado = ? WHERE id = ?`
+  ).run(valor, aprovado, id);
 
+  res.json({ sucesso: true });
+});
 
 // MUDAR STATUS
 app.put('/chamados/:id/status', (req, res) => {
   const { status } = req.body;
   const id = req.params.id;
 
-  db.run(
-    `UPDATE chamados SET status = ? WHERE id = ?`,
-    [status, id],
-    function (err) {
-      if (err) return res.status(500).end();
-      res.json({ sucesso: true });
-    }
-  );
+  db.prepare(
+    `UPDATE chamados SET status = ? WHERE id = ?`
+  ).run(status, id);
+
+  res.json({ sucesso: true });
 });
 
 // RELATÓRIO – TOTAL FATURADO
 app.get('/relatorios/faturamento', (req, res) => {
-  db.get(
-    `SELECT 
-       COUNT(*) as quantidade,
-       SUM(valor) as total
-     FROM chamados
-     WHERE aprovado = 1`,
-    (err, row) => {
-      if (err) return res.status(500).end();
-      res.json(row);
-    }
-  );
+  const row = db.prepare(`
+    SELECT COUNT(*) as quantidade, SUM(valor) as total
+    FROM chamados
+    WHERE aprovado = 1
+  `).get();
+
+  res.json(row);
 });
 
-// RELATÓRIO – LISTA DE SERVIÇOS APROVADOS
 app.get('/relatorios/servicos', (req, res) => {
-  db.all(
-    `SELECT cliente, veiculo, valor
-     FROM chamados
-     WHERE aprovado = 1`,
-    (err, rows) => {
-      if (err) return res.status(500).end();
-      res.json(rows);
-    }
-  );
+  const rows = db.prepare(`
+    SELECT cliente, veiculo, valor
+    FROM chamados
+    WHERE aprovado = 1
+  `).all();
+
+  res.json(rows);
 });
 
 const PORT = process.env.PORT || 3333;
