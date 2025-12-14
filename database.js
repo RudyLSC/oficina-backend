@@ -1,19 +1,18 @@
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 
-const db = new sqlite3.Database('./oficina.db');
+const db = new Database('oficina.db');
 
-db.serialize(() => {
-  db.run(`
-    CREATE TABLE IF NOT EXISTS chamados (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      cliente TEXT,
-      veiculo TEXT,
-      manutenção TEXT,
-      status TEXT,
-      valor REAL,
-      aprovado INTEGER
-    )
-  `);
-});
+// Cria tabela se não existir
+db.prepare(`
+  CREATE TABLE IF NOT EXISTS chamados (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    cliente TEXT,
+    veiculo TEXT,
+    problema TEXT,
+    status TEXT,
+    valor REAL,
+    aprovado INTEGER
+  )
+`).run();
 
 module.exports = db;
